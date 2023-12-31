@@ -44,8 +44,12 @@ public class SecurityConfig {
         });
         http.authorizeHttpRequests((authorize) -> authorize
                 .requestMatchers(
-                        "/api/register", "api/kafka/**", "api/send-mail/**",
-                        "api/email/**"
+                        "/api/register",
+                        "api/kafka/**",
+                        "api/send-mail/**",
+                        "api/email/**",
+                        "api/forgot-password",
+                        "api/reset-password"
                 ).permitAll()
                 .anyRequest().authenticated()
 

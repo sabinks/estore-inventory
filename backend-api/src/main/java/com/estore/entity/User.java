@@ -39,6 +39,9 @@ public class User {
     @Column(name = "updated_at")
     private String updatedAt;
 
+    @Column(name = "reset_token")
+    private String resetToken;
+
     @ManyToMany(fetch = FetchType.EAGER, cascade = { CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
     @JoinTable(name ="user_role", joinColumns = @JoinColumn(name="user_id"), inverseJoinColumns = @JoinColumn(name = "role_id") )
     private List<Role>  roles;

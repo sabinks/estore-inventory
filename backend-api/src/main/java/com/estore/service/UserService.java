@@ -2,8 +2,11 @@ package com.estore.service;
 
 import com.estore.dto.ReceiverDto;
 import com.estore.dto.RegisterDto;
+import com.estore.dto.user.ForgotPasswordDto;
+import com.estore.dto.user.ResetPasswordDto;
 import com.estore.entity.Role;
 import com.estore.entity.User;
+import com.estore.mail.ResetPassword;
 import com.estore.mail.VerificationMail;
 import com.estore.repository.RoleRepository;
 import com.estore.repository.UserRepository;
@@ -35,6 +38,9 @@ public class UserService {
     @Autowired
     VerificationMail verificationMail;
 
+    @Autowired
+    ResetPassword resetPassword;
+
     @Value("${spring.app.url}")
     private String app_url;
 
@@ -50,7 +56,7 @@ public class UserService {
         user.setPassword(passwordEncoder.encode(registerDto.getPassword()));
         user.setActive(false);
         user.setEmailVerifiedAt("");
-        String verificationToken = getAlphaNumericString(10);
+        String verificationToken = myUtilityClass.getAlphaNumericString(10);
         user.setVerificationToken(verificationToken);
         Role role = roleRepository.findByName("ROLE_CLIENT");
 
@@ -73,35 +79,6 @@ public class UserService {
         verificationMail.sendMail(receiverDto);
     }
 
-    static String getAlphaNumericString(int n)
-    {
-
-        // choose a Character random from this String
-        String AlphaNumericString = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-                + "0123456789"
-                + "abcdefghijklmnopqrstuvxyz";
-
-        // create StringBuffer size of AlphaNumericString
-        StringBuilder sb = new StringBuilder(n);
-
-        for (int i = 0; i < n; i++) {
-
-            // generate a random number between
-            // 0 to AlphaNumericString variable length
-            int index
-                    = (int)(AlphaNumericString.length()
-                    * Math.random());
-
-            // add Character one by one in end of sb
-            sb.append(AlphaNumericString
-                    .charAt(index));
-        }
-
-        return sb.toString();
-    }
-
-
-
     @Transactional
     public void verifyEmail(Long id, String verification_token) throws Exception {
         Optional<User> user = userRepository.findById(id);
@@ -123,4 +100,38 @@ public class UserService {
         userRepository.save(user.get());
     }
 
+    public void forgotPassword(ForgotPasswordDto forgotPasswordDto) throws Exception {
+        String email = forgotPasswordDto.getEmail();
+        List<User> users = userRepository.findByEmail(email);
+        if(users.isEmpty()){
+            throw new EntityNotFoundException("User email not registered, please check email address.");
+        }
+        String resetToken = myUtilityClass.getAlphaNumericString(15);
+        users.get(0).setResetToken(resetToken);
+        users.get(0).setUpdatedAt(myUtilityClass.currentDateTime());
+        userRepository.save(users.get(0));
+
+        String reset_url = app_url + "/reset-password/" + users.get(0).getId() + "/" + resetToken;
+        ReceiverDto receiverDto = new ReceiverDto();
+        receiverDto.setName(users.get(0).getName());
+        receiverDto.setEmail(users.get(0).getEmail());
+        receiverDto.setUrl(reset_url);
+
+        resetPassword.sendMail(receiverDto);
+    }
+
+    public void resetPassword(ResetPasswordDto resetPasswordDto) throws Exception {
+        Optional<User> user = userRepository.findById(resetPasswordDto.getId());
+        if(user.isEmpty()){
+            throw new EntityNotFoundException("User not found");
+        }
+        if(!user.get().getResetToken().matches(resetPasswordDto.getResetToken())){
+            throw new Exception("Provided reset token mismatch");
+        }
+        user.get().setPassword(passwordEncoder.encode(resetPasswordDto.getPassword()));
+        user.get().setResetToken("");
+        user.get().setUpdatedAt(myUtilityClass.currentDateTime());
+
+        userRepository.save(user.get());
+    }
 }
