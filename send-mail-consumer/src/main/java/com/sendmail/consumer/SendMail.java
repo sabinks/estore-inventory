@@ -17,6 +17,7 @@ public class SendMail {
 	private String mailSender;
 	@RabbitListener(queues = "estore_queue")
 	public void consumeAdminSendMailQueue(ReceiverDto receiverDto) throws Exception {
+		System.out.println(receiverDto);
 		System.out.println("Sending mail: " + receiverDto.getName());
 		MimeMessage message = javaMailSender.createMimeMessage();
 		message.setFrom(new InternetAddress(mailSender));

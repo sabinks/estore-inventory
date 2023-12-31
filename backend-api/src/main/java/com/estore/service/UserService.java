@@ -12,6 +12,7 @@ import jakarta.persistence.EntityExistsException;
 import jakarta.persistence.EntityNotFoundException;
 import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -33,6 +34,9 @@ public class UserService {
     MyUtilityClass myUtilityClass;
     @Autowired
     VerificationMail verificationMail;
+
+    @Value("${spring.app.url}")
+    private String app_url;
 
     @Transactional
     public void registerUser(RegisterDto registerDto) throws Exception{
@@ -59,12 +63,12 @@ public class UserService {
 
         User savedUser = userRepository.save(user);
 
-        String verify_url = "/email/verify/" + savedUser.getId() + "/" + verificationToken;
+        String verify_url = app_url +"/email/verify/" + savedUser.getId() + "/" + verificationToken;
 
         ReceiverDto receiverDto = new ReceiverDto();
         receiverDto.setEmail(user.getEmail());
         receiverDto.setName(user.getName());
-        receiverDto.setUrl(verify_url);
+        receiverDto.setUrl(verify_url.toString());
 
         verificationMail.sendMail(receiverDto);
     }

@@ -11,9 +11,10 @@ public class VerificationMail {
     RabbitTemplate rabbitTemplate;
 
     public void sendMail(ReceiverDto receiverDto) throws Exception {
+
         receiverDto.setSubject("Email Verification");
         String htmlContent = "<h1>Please click link below to verify your email address</h1>" +
-                "<a href=" + receiverDto.getUrl()  +">Verify Email Address</a>" +
+                "<a href='" + receiverDto.getUrl()  +"'>Verify Email Address</a>" +
                 "<p></p>";
         receiverDto.setBody(htmlContent);
         rabbitTemplate.convertAndSend("estore_exchange", "estore_routingkey", receiverDto);
